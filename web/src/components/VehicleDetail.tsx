@@ -1,5 +1,6 @@
 import React from "react";
 import type { Vehicle } from "../api/client";
+import { StatusBadge } from "./StatusBadge";
 
 interface Props {
   vehicle: Vehicle;
@@ -14,9 +15,7 @@ export function VehicleDetail({ vehicle }: Props) {
         <dd>{vehicle.id}</dd>
         <dt>Status</dt>
         <dd>
-          <span className={`status-badge status-${vehicle.status}`}>
-            {vehicle.status}
-          </span>
+          <StatusBadge status={vehicle.status} />
         </dd>
         <dt>Position</dt>
         <dd>
