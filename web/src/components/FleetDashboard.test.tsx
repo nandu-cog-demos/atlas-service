@@ -38,7 +38,7 @@ describe("FleetDashboard", () => {
 
   it("displays vehicle statuses", () => {
     render(<FleetDashboard />);
-    expect(screen.getByText("active")).toBeInTheDocument();
-    expect(screen.getByText("idle")).toBeInTheDocument();
+    expect(screen.getByText("Active")).toBeInTheDocument();
+    expect(screen.getByText("Idle")).toBeInTheDocument();
   });
 });

@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import type { Vehicle } from "../api/client";
 import { useTelemetry } from "../hooks/useTelemetry";
+import { StatusBadge } from "./StatusBadge";
 import { VehicleDetail } from "./VehicleDetail";
 
 export function FleetDashboard() {
@@ -35,9 +36,7 @@ export function FleetDashboard() {
               >
                 <td>{v.name}</td>
                 <td>
-                  <span className={`status-badge status-${v.status}`}>
-                    {v.status}
-                  </span>
+                  <StatusBadge status={v.status} />
                 </td>
                 <td>{v.last_seen ?? "—"}</td>
               </tr>
