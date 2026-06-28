@@ -1,10 +1,18 @@
-"""Feature extraction for route scoring."""
+"""Feature extraction and scoring helpers for route optimization.
+
+This module consolidates all feature-engineering and scoring logic used by
+the inference layer.  Keeping extraction and scoring co-located makes the
+pipeline easier to test and evolve independently of the inference API.
+"""
 
 from __future__ import annotations
 
 import math
 from typing import Any
 
+# ---------------------------------------------------------------------------
+# Telemetry context
+# ---------------------------------------------------------------------------
 
 def extract_telemetry_context(telemetry: list[dict[str, Any]]) -> dict[str, Any]:
     """Derive contextual features from recent telemetry records.
@@ -34,6 +42,10 @@ def extract_telemetry_context(telemetry: list[dict[str, Any]]) -> dict[str, Any]
     }
 
 
+# ---------------------------------------------------------------------------
+# Route feature extraction
+# ---------------------------------------------------------------------------
+
 def extract_route_features(candidate: Any, context: dict[str, Any]) -> dict[str, Any]:
     """Compute features for a single route candidate.
 
@@ -41,12 +53,7 @@ def extract_route_features(candidate: Any, context: dict[str, Any]) -> dict[str,
     model-ready features.
     """
     waypoints = candidate.waypoints
-    total_distance = 0.0
-    for i in range(len(waypoints) - 1):
-        total_distance += _haversine_km(
-            waypoints[i][0], waypoints[i][1],
-            waypoints[i + 1][0], waypoints[i + 1][1],
-        )
+    total_distance = _sum_segment_distances(waypoints)
 
     if waypoints:
         start_lat, start_lon = waypoints[0]
@@ -65,6 +72,46 @@ def extract_route_features(candidate: Any, context: dict[str, Any]) -> dict[str,
         "detour_km": round(detour, 4),
     }
 
+
+def _sum_segment_distances(waypoints: list[tuple[float, float]]) -> float:
+    """Sum haversine distances between consecutive waypoints."""
+    total = 0.0
+    for i in range(len(waypoints) - 1):
+        total += _haversine_km(
+            waypoints[i][0], waypoints[i][1],
+            waypoints[i + 1][0], waypoints[i + 1][1],
+        )
+    return total
+
+
+# ---------------------------------------------------------------------------
+# Scoring
+# ---------------------------------------------------------------------------
+
+def compute_route_score(features: dict[str, Any]) -> float:
+    """Return a composite route score in [0, 1].
+
+    The score combines distance efficiency, waypoint complexity, recent
+    vehicle speed, and fuel state.
+    """
+    distance_factor = 1.0 / (1.0 + features["normalized_distance"])
+    waypoint_penalty = features["waypoint_count"] * 0.02
+    speed_bonus = min(features["avg_recent_speed"] / 100.0, 1.0) * 0.15
+    fuel_factor = features["fuel_level"] / 100.0 * 0.1
+
+    score = round(distance_factor - waypoint_penalty + speed_bonus + fuel_factor, 4)
+    return max(score, 0.0)
+
+
+def compute_eta_minutes(features: dict[str, Any]) -> float:
+    """Estimate arrival time in minutes from route features."""
+    speed = max(features["avg_recent_speed"], 5.0)
+    return round(features["normalized_distance"] / speed * 60, 2)
+
+
+# ---------------------------------------------------------------------------
+# Geo helpers
+# ---------------------------------------------------------------------------
 
 def _haversine_km(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
     """Great-circle distance in km between two GPS coordinates."""
