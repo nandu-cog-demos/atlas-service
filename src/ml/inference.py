@@ -77,7 +77,7 @@ def score_routes_batch(
     results: list[dict[str, Any]] = []
 
     for start in range(0, n, batch_size):
-        chunk = candidates[start:start + batch_size - 1]
+        chunk = candidates[start:start + batch_size]
         results.extend(_score_chunk(chunk, context))
 
     results.sort(key=lambda r: r["score"], reverse=True)
