@@ -1,32 +1,42 @@
 import { render, screen } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import type { Vehicle } from "../api/client";
 import { FleetDashboard } from "./FleetDashboard";
+
+const telemetryState = vi.hoisted(() => ({
+  vehicles: [] as Vehicle[],
+  loading: false,
+  error: null as string | null,
+}));
 
 vi.mock("../hooks/useTelemetry", () => ({
   useTelemetry: () => ({
-    vehicles: [
-      {
-        id: "v-001",
-        name: "Truck Alpha",
-        status: "active",
-        last_latitude: 37.7749,
-        last_longitude: -122.4194,
-        last_seen: "2024-01-15T10:30:00Z",
-      },
-      {
-        id: "v-002",
-        name: "Van Bravo",
-        status: "idle",
-        last_latitude: null,
-        last_longitude: null,
-        last_seen: null,
-      },
-    ],
-    loading: false,
-    error: null,
+    vehicles: telemetryState.vehicles,
+    loading: telemetryState.loading,
+    error: telemetryState.error,
     refresh: vi.fn(),
   }),
 }));
+
+function makeVehicle(id: string, name: string): Vehicle {
+  return {
+    id,
+    name,
+    status: "active",
+    last_latitude: null,
+    last_longitude: null,
+    last_seen: null,
+  };
+}
+
+beforeEach(() => {
+  telemetryState.vehicles = [
+    makeVehicle("v-001", "Truck Alpha"),
+    makeVehicle("v-002", "Van Bravo"),
+  ];
+  telemetryState.loading = false;
+  telemetryState.error = null;
+});
 
 describe("FleetDashboard", () => {
   it("renders the vehicle list", () => {
@@ -38,7 +48,36 @@ describe("FleetDashboard", () => {
 
   it("displays vehicle statuses", () => {
     render(<FleetDashboard />);
-    expect(screen.getByText("active")).toBeInTheDocument();
-    expect(screen.getByText("idle")).toBeInTheDocument();
+    expect(screen.getAllByText("active")).toHaveLength(2);
+  });
+
+  it("shows the total vehicle count badge", () => {
+    render(<FleetDashboard />);
+    expect(screen.getByText("2 vehicles")).toBeInTheDocument();
+  });
+
+  it("uses singular wording for exactly one vehicle", () => {
+    telemetryState.vehicles = [makeVehicle("v-001", "Truck Alpha")];
+    render(<FleetDashboard />);
+    expect(screen.getByText("1 vehicle")).toBeInTheDocument();
+  });
+
+  it("uses plural wording when there are no vehicles", () => {
+    telemetryState.vehicles = [];
+    render(<FleetDashboard />);
+    expect(screen.getByText("0 vehicles")).toBeInTheDocument();
+  });
+
+  it("updates the count reactively when vehicle data changes", () => {
+    const { rerender } = render(<FleetDashboard />);
+    expect(screen.getByText("2 vehicles")).toBeInTheDocument();
+
+    telemetryState.vehicles = [
+      makeVehicle("v-001", "Truck Alpha"),
+      makeVehicle("v-002", "Van Bravo"),
+      makeVehicle("v-003", "Car Charlie"),
+    ];
+    rerender(<FleetDashboard />);
+    expect(screen.getByText("3 vehicles")).toBeInTheDocument();
   });
 });
