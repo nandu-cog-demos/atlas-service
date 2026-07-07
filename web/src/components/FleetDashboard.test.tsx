@@ -41,4 +41,9 @@ describe("FleetDashboard", () => {
     expect(screen.getByText("active")).toBeInTheDocument();
     expect(screen.getByText("idle")).toBeInTheDocument();
   });
+
+  it("shows the total vehicle count in the header", () => {
+    render(<FleetDashboard />);
+    expect(screen.getByText("2 vehicles")).toBeInTheDocument();
+  });
 });
