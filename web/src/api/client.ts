@@ -33,8 +33,50 @@ export interface OperatorSettings {
   default_map_zoom: number;
 }
 
+export interface Certification {
+  name: string;
+  status: string;
+  description: string;
+}
+
+export interface SecurityPractice {
+  category: string;
+  items: string[];
+}
+
+export interface Subprocessor {
+  name: string;
+  purpose: string;
+  location: string;
+}
+
+export interface ServiceStatus {
+  state: string;
+  uptime_90d: number;
+  status_page_url: string;
+}
+
+export interface TrustResource {
+  label: string;
+  url: string;
+}
+
+export interface TrustCenter {
+  overview: string;
+  last_updated: string;
+  certifications: Certification[];
+  security_practices: SecurityPractice[];
+  subprocessors: Subprocessor[];
+  service_status: ServiceStatus;
+  resources: TrustResource[];
+}
+
 export function fetchVehicles(): Promise<Vehicle[]> {
   return request<Vehicle[]>("/vehicles/");
+}
+
+export function fetchTrustCenter(): Promise<TrustCenter> {
+  return request<TrustCenter>("/trust/");
 }
 
 export function fetchVehicle(id: string): Promise<Vehicle> {
