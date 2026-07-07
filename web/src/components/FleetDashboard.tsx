@@ -14,6 +14,9 @@ export function FleetDashboard() {
     <div className="dashboard">
       <header>
         <h1>Atlas Fleet Dashboard</h1>
+        <span className="count-badge">
+          {`${vehicles.length} ${vehicles.length === 1 ? "vehicle" : "vehicles"}`}
+        </span>
       </header>
 
       <section className="vehicle-list">
