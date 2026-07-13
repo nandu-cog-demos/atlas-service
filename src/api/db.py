@@ -154,6 +154,28 @@ def update_operator(operator_id: str, updates: dict[str, Any]) -> None:
     execute(f"UPDATE operators SET {set_clauses} WHERE id = ?", values)
 
 
+def get_fleet_status_counts() -> dict[str, int]:
+    rows = fetch_all("SELECT status, COUNT(*) AS count FROM vehicles GROUP BY status")
+    return {r["status"]: r["count"] for r in rows}
+
+
+def get_fleet_average_fuel_level() -> float | None:
+    row = fetch_one(
+        """
+        SELECT AVG(t.fuel_level) AS avg_fuel_level
+        FROM telemetry t
+        JOIN (
+            SELECT vehicle_id, MAX(timestamp) AS max_timestamp
+            FROM telemetry
+            GROUP BY vehicle_id
+        ) latest
+          ON t.vehicle_id = latest.vehicle_id
+         AND t.timestamp = latest.max_timestamp
+        """
+    )
+    return row["avg_fuel_level"] if row else None
+
+
 def get_recent_telemetry(vehicle_id: str, limit: int = 50) -> list[dict[str, Any]]:
     return fetch_all(
         "SELECT * FROM telemetry WHERE vehicle_id = ? ORDER BY timestamp DESC LIMIT ?",
