@@ -68,6 +68,39 @@ def _init_schema(conn: sqlite3.Connection) -> None:
             created_at TEXT NOT NULL
         );
 
+        CREATE TABLE IF NOT EXISTS zone_events (
+            id TEXT PRIMARY KEY,
+            vehicle_id TEXT NOT NULL,
+            zone_id TEXT NOT NULL,
+            event_type TEXT NOT NULL CHECK (event_type IN ('entry', 'exit')),
+            latitude REAL NOT NULL,
+            longitude REAL NOT NULL,
+            occurred_at TEXT NOT NULL
+        );
+
+        CREATE TABLE IF NOT EXISTS vehicle_zone_presence (
+            vehicle_id TEXT NOT NULL,
+            zone_id TEXT NOT NULL,
+            entered_at TEXT NOT NULL,
+            PRIMARY KEY (vehicle_id, zone_id)
+        );
+
+        CREATE TABLE IF NOT EXISTS alerts (
+            id TEXT PRIMARY KEY,
+            zone_event_id TEXT NOT NULL,
+            vehicle_id TEXT NOT NULL,
+            zone_id TEXT NOT NULL,
+            created_at TEXT NOT NULL,
+            acknowledged INTEGER NOT NULL DEFAULT 0,
+            acknowledged_by TEXT,
+            acknowledged_at TEXT
+        );
+
+        CREATE INDEX IF NOT EXISTS idx_zone_events_occurred_at
+            ON zone_events (occurred_at);
+        CREATE INDEX IF NOT EXISTS idx_alerts_created_at
+            ON alerts (created_at);
+
         INSERT OR IGNORE INTO vehicles (id, name, status, last_latitude, last_longitude, last_seen)
         VALUES
             ('v-001', 'Truck Alpha', 'active', 37.7749, -122.4194, '2024-01-15T10:30:00Z'),
@@ -202,6 +235,9 @@ def create_zone(
     row = get_zone(zone_id)
     if row is None:
         raise RuntimeError("Zone was not created")
+    from src.api.geofence import invalidate_active_zones_cache
+
+    invalidate_active_zones_cache()
     return row
 
 
@@ -220,4 +256,117 @@ def list_zones(active: bool | None = None) -> list[dict[str, Any]]:
 
 def deactivate_zone(zone_id: str) -> dict[str, Any] | None:
     execute("UPDATE zones SET active = 0 WHERE id = ?", (zone_id,))
-    return get_zone(zone_id)
+    row = get_zone(zone_id)
+    if row is not None:
+        from src.api.geofence import invalidate_active_zones_cache
+
+        invalidate_active_zones_cache()
+    return row
+
+
+def get_zone_presence(vehicle_id: str, zone_id: str) -> dict[str, Any] | None:
+    return fetch_one(
+        """
+        SELECT vehicle_id, zone_id, entered_at
+        FROM vehicle_zone_presence
+        WHERE vehicle_id = ? AND zone_id = ?
+        """,
+        (vehicle_id, zone_id),
+    )
+
+
+def insert_zone_presence(vehicle_id: str, zone_id: str, entered_at: str) -> None:
+    execute(
+        """
+        INSERT INTO vehicle_zone_presence (vehicle_id, zone_id, entered_at)
+        VALUES (?, ?, ?)
+        """,
+        (vehicle_id, zone_id, entered_at),
+    )
+
+
+def delete_zone_presence(vehicle_id: str, zone_id: str) -> None:
+    execute(
+        "DELETE FROM vehicle_zone_presence WHERE vehicle_id = ? AND zone_id = ?",
+        (vehicle_id, zone_id),
+    )
+
+
+def insert_zone_event(
+    vehicle_id: str,
+    zone_id: str,
+    event_type: str,
+    latitude: float,
+    longitude: float,
+    occurred_at: str,
+) -> dict[str, Any]:
+    event_id = str(uuid4())
+    execute(
+        """
+        INSERT INTO zone_events
+            (id, vehicle_id, zone_id, event_type, latitude, longitude, occurred_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
+        """,
+        (
+            event_id,
+            vehicle_id,
+            zone_id,
+            event_type,
+            latitude,
+            longitude,
+            occurred_at,
+        ),
+    )
+    row = fetch_one("SELECT * FROM zone_events WHERE id = ?", (event_id,))
+    if row is None:
+        raise RuntimeError("Zone event was not created")
+    return row
+
+
+def insert_alert(zone_event_id: str, vehicle_id: str, zone_id: str) -> dict[str, Any]:
+    alert_id = str(uuid4())
+    created_at = datetime.now(timezone.utc).isoformat()
+    execute(
+        """
+        INSERT INTO alerts
+            (id, zone_event_id, vehicle_id, zone_id, created_at)
+        VALUES (?, ?, ?, ?, ?)
+        """,
+        (alert_id, zone_event_id, vehicle_id, zone_id, created_at),
+    )
+    row = fetch_one("SELECT * FROM alerts WHERE id = ?", (alert_id,))
+    if row is None:
+        raise RuntimeError("Alert was not created")
+    return row
+
+
+def list_zone_events(
+    vehicle_id: str | None = None,
+    zone_id: str | None = None,
+    limit: int = 50,
+) -> list[dict[str, Any]]:
+    return fetch_all(
+        """
+        SELECT * FROM zone_events
+        WHERE (? IS NULL OR vehicle_id = ?)
+          AND (? IS NULL OR zone_id = ?)
+        ORDER BY occurred_at DESC
+        LIMIT ?
+        """,
+        (vehicle_id, vehicle_id, zone_id, zone_id, limit),
+    )
+
+
+def list_alerts(
+    vehicle_id: str | None = None,
+    zone_id: str | None = None,
+) -> list[dict[str, Any]]:
+    return fetch_all(
+        """
+        SELECT * FROM alerts
+        WHERE (? IS NULL OR vehicle_id = ?)
+          AND (? IS NULL OR zone_id = ?)
+        ORDER BY created_at DESC
+        """,
+        (vehicle_id, vehicle_id, zone_id, zone_id),
+    )

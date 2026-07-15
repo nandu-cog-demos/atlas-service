@@ -5,10 +5,11 @@ from __future__ import annotations
 import logging
 from datetime import datetime, timezone
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, BackgroundTasks, Depends
 
 from src.api.auth import get_current_operator
 from src.api.db import insert_telemetry
+from src.api.geofence import evaluate_telemetry
 from src.api.models import TelemetryPayload, TelemetryResponse
 
 logger = logging.getLogger(__name__)
@@ -18,6 +19,7 @@ router = APIRouter(prefix="/telemetry", tags=["telemetry"])
 @router.post("/", response_model=TelemetryResponse)
 def ingest_telemetry(
     payload: TelemetryPayload,
+    background_tasks: BackgroundTasks,
     operator_id: str = Depends(get_current_operator),
 ) -> TelemetryResponse:
     logger.info("Telemetry received for vehicle %s", payload.vehicle_id)
@@ -29,6 +31,13 @@ def ingest_telemetry(
         heading=payload.heading,
         fuel_level=payload.fuel_level,
         timestamp=payload.timestamp,
+    )
+    background_tasks.add_task(
+        evaluate_telemetry,
+        payload.vehicle_id,
+        payload.latitude,
+        payload.longitude,
+        payload.timestamp,
     )
     return TelemetryResponse(
         id=record_id,

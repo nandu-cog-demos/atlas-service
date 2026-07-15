@@ -93,3 +93,13 @@ class ZoneResponse(BaseModel):
     zone_type: Literal["restricted", "site"]
     active: bool
     created_at: datetime
+
+
+class ZoneEventResponse(BaseModel):
+    id: str
+    vehicle_id: str
+    zone_id: str
+    event_type: Literal["entry", "exit"]
+    latitude: float
+    longitude: float
+    occurred_at: datetime
