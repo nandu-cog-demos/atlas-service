@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import type { Vehicle } from "../api/client";
 import { useTelemetry } from "../hooks/useTelemetry";
+import { AlertsPanel } from "./AlertsPanel";
 import { VehicleDetail } from "./VehicleDetail";
 
 export function FleetDashboard() {
@@ -15,6 +16,8 @@ export function FleetDashboard() {
       <header>
         <h1>Atlas Fleet Dashboard</h1>
       </header>
+
+      <AlertsPanel />
 
       <section className="vehicle-list">
         <h2>Vehicles</h2>

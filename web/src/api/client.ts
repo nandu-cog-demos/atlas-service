@@ -33,6 +33,17 @@ export interface OperatorSettings {
   default_map_zoom: number;
 }
 
+export interface Alert {
+  id: string;
+  zone_event_id: string;
+  vehicle_id: string;
+  zone_id: string;
+  created_at: string;
+  acknowledged: boolean;
+  acknowledged_by: string | null;
+  acknowledged_at: string | null;
+}
+
 export function fetchVehicles(): Promise<Vehicle[]> {
   return request<Vehicle[]>("/vehicles/");
 }
@@ -51,5 +62,15 @@ export function updateSettings(
   return request<OperatorSettings>("/settings/", {
     method: "PATCH",
     body: JSON.stringify(updates),
+  });
+}
+
+export function fetchAlerts(): Promise<Alert[]> {
+  return request<Alert[]>("/alerts/");
+}
+
+export function acknowledgeAlert(id: string): Promise<Alert> {
+  return request<Alert>(`/alerts/${id}/acknowledge`, {
+    method: "POST",
   });
 }
