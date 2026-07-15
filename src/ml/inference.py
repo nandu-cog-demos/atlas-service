@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
-import math
 from typing import Any
 
+from src.geo import haversine_m
 from src.ml.features import extract_route_features, extract_telemetry_context
 
 
@@ -66,11 +66,4 @@ def score_routes_batch(
 
 def _haversine(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
     """Great-circle distance in km between two points."""
-    r = 6371.0
-    dlat = math.radians(lat2 - lat1)
-    dlon = math.radians(lon2 - lon1)
-    a = (
-        math.sin(dlat / 2) ** 2
-        + math.cos(math.radians(lat1)) * math.cos(math.radians(lat2)) * math.sin(dlon / 2) ** 2
-    )
-    return r * 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
+    return haversine_m(lat1, lon1, lat2, lon2) / 1000
