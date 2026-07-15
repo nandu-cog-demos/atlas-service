@@ -79,3 +79,15 @@ def test_ingest_telemetry_batch(client: TestClient, auth_headers: dict[str, str]
     assert len(data["ids"]) == 2
     assert all(data["ids"])
     assert "received_at" in data
+
+
+def test_ingest_telemetry_batch_empty_rejected(
+    client: TestClient, auth_headers: dict[str, str]
+) -> None:
+    resp = client.post(
+        "/api/v1/telemetry/batch",
+        json={"records": []},
+        headers=auth_headers,
+    )
+
+    assert resp.status_code == 422

@@ -30,7 +30,7 @@ class TelemetryResponse(BaseModel):
 
 
 class TelemetryBatchPayload(BaseModel):
-    records: list[TelemetryPayload]
+    records: list[TelemetryPayload] = Field(min_length=1, max_length=1000)
 
 
 class TelemetryBatchResponse(BaseModel):

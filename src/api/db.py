@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 
 _DB_PATH = ":memory:"
 _connection: sqlite3.Connection | None = None
-_db_lock = threading.Lock()
+_db_lock = threading.RLock()
 
 
 def _get_connection() -> sqlite3.Connection:
