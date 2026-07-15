@@ -4,15 +4,19 @@ from __future__ import annotations
 
 import logging
 import sqlite3
+import threading
 from contextlib import contextmanager
 from datetime import datetime, timezone
 from typing import Any, Generator
 from uuid import uuid4
 
+from src.api.models import TelemetryPayload
+
 logger = logging.getLogger(__name__)
 
 _DB_PATH = ":memory:"
 _connection: sqlite3.Connection | None = None
+_db_lock = threading.Lock()
 
 
 def _get_connection() -> sqlite3.Connection:
@@ -49,6 +53,9 @@ def _init_schema(conn: sqlite3.Connection) -> None:
             FOREIGN KEY (vehicle_id) REFERENCES vehicles(id)
         );
 
+        CREATE INDEX IF NOT EXISTS idx_telemetry_vehicle_ts
+            ON telemetry (vehicle_id, timestamp DESC);
+
         CREATE TABLE IF NOT EXISTS operators (
             id TEXT PRIMARY KEY,
             display_name TEXT NOT NULL,
@@ -74,14 +81,17 @@ def _init_schema(conn: sqlite3.Connection) -> None:
 
 @contextmanager
 def get_cursor() -> Generator[sqlite3.Cursor, None, None]:
-    conn = _get_connection()
-    cursor = conn.cursor()
-    try:
-        yield cursor
-        conn.commit()
-    except Exception:
-        conn.rollback()
-        raise
+    with _db_lock:
+        conn = _get_connection()
+        cursor = conn.cursor()
+        try:
+            yield cursor
+            conn.commit()
+        except Exception:
+            conn.rollback()
+            raise
+        finally:
+            cursor.close()
 
 
 def fetch_one(query: str, params: tuple[Any, ...] = ()) -> dict[str, Any] | None:
@@ -113,25 +123,69 @@ def insert_telemetry(
 ) -> str:
     record_id = str(uuid4())
     now = datetime.now(timezone.utc).isoformat()
-    execute(
-        """
-        INSERT INTO telemetry
-            (id, vehicle_id, latitude, longitude, speed_kmh,
-             heading, fuel_level, timestamp, received_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-        """,
-        (
-            record_id, vehicle_id, latitude, longitude,
-            speed_kmh, heading, fuel_level,
-            timestamp.isoformat(), now,
-        ),
-    )
-    execute(
-        "UPDATE vehicles SET last_latitude = ?, last_longitude = ?,"
-        " last_seen = ?, status = 'active' WHERE id = ?",
-        (latitude, longitude, now, vehicle_id),
-    )
+    with get_cursor() as cur:
+        cur.execute(
+            """
+            INSERT INTO telemetry
+                (id, vehicle_id, latitude, longitude, speed_kmh,
+                 heading, fuel_level, timestamp, received_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                record_id, vehicle_id, latitude, longitude,
+                speed_kmh, heading, fuel_level,
+                timestamp.isoformat(), now,
+            ),
+        )
+        cur.execute(
+            "UPDATE vehicles SET last_latitude = ?, last_longitude = ?,"
+            " last_seen = ?, status = 'active' WHERE id = ?",
+            (latitude, longitude, now, vehicle_id),
+        )
     return record_id
+
+
+def insert_telemetry_batch(records: list[TelemetryPayload]) -> list[str]:
+    record_ids = [str(uuid4()) for _ in records]
+    received_at = [datetime.now(timezone.utc).isoformat() for _ in records]
+    rows = [
+        (
+            record_id,
+            record.vehicle_id,
+            record.latitude,
+            record.longitude,
+            record.speed_kmh,
+            record.heading,
+            record.fuel_level,
+            record.timestamp.isoformat(),
+            received,
+        )
+        for record_id, received, record in zip(record_ids, received_at, records)
+    ]
+
+    latest_by_vehicle: dict[str, tuple[TelemetryPayload, str]] = {}
+    for record, received in zip(records, received_at):
+        latest = latest_by_vehicle.get(record.vehicle_id)
+        if latest is None or record.timestamp > latest[0].timestamp:
+            latest_by_vehicle[record.vehicle_id] = (record, received)
+
+    with get_cursor() as cur:
+        cur.executemany(
+            """
+            INSERT INTO telemetry
+                (id, vehicle_id, latitude, longitude, speed_kmh,
+                 heading, fuel_level, timestamp, received_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            rows,
+        )
+        for vehicle_id, (record, received) in latest_by_vehicle.items():
+            cur.execute(
+                "UPDATE vehicles SET last_latitude = ?, last_longitude = ?,"
+                " last_seen = ?, status = 'active' WHERE id = ?",
+                (record.latitude, record.longitude, received, vehicle_id),
+            )
+    return record_ids
 
 
 def get_vehicle(vehicle_id: str) -> dict[str, Any] | None:

@@ -29,6 +29,15 @@ class TelemetryResponse(BaseModel):
     received_at: datetime
 
 
+class TelemetryBatchPayload(BaseModel):
+    records: list[TelemetryPayload]
+
+
+class TelemetryBatchResponse(BaseModel):
+    ids: list[str]
+    received_at: datetime
+
+
 class VehicleResponse(BaseModel):
     id: str
     name: str
