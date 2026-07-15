@@ -235,9 +235,6 @@ def create_zone(
     row = get_zone(zone_id)
     if row is None:
         raise RuntimeError("Zone was not created")
-    from src.api.geofence import invalidate_active_zones_cache
-
-    invalidate_active_zones_cache()
     return row
 
 
@@ -256,12 +253,7 @@ def list_zones(active: bool | None = None) -> list[dict[str, Any]]:
 
 def deactivate_zone(zone_id: str) -> dict[str, Any] | None:
     execute("UPDATE zones SET active = 0 WHERE id = ?", (zone_id,))
-    row = get_zone(zone_id)
-    if row is not None:
-        from src.api.geofence import invalidate_active_zones_cache
-
-        invalidate_active_zones_cache()
-    return row
+    return get_zone(zone_id)
 
 
 def get_zone_presence(vehicle_id: str, zone_id: str) -> dict[str, Any] | None:
