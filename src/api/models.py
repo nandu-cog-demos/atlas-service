@@ -103,3 +103,14 @@ class ZoneEventResponse(BaseModel):
     latitude: float
     longitude: float
     occurred_at: datetime
+
+
+class AlertResponse(BaseModel):
+    id: str
+    zone_event_id: str
+    vehicle_id: str
+    zone_id: str
+    created_at: datetime
+    acknowledged: bool
+    acknowledged_by: str | None
+    acknowledged_at: datetime | None
