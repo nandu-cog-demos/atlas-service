@@ -352,13 +352,44 @@ def list_zone_events(
 def list_alerts(
     vehicle_id: str | None = None,
     zone_id: str | None = None,
+    acknowledged: bool | None = None,
+    limit: int = 50,
 ) -> list[dict[str, Any]]:
     return fetch_all(
         """
         SELECT * FROM alerts
         WHERE (? IS NULL OR vehicle_id = ?)
           AND (? IS NULL OR zone_id = ?)
+          AND (? IS NULL OR acknowledged = ?)
         ORDER BY created_at DESC
+        LIMIT ?
         """,
-        (vehicle_id, vehicle_id, zone_id, zone_id),
+        (
+            vehicle_id,
+            vehicle_id,
+            zone_id,
+            zone_id,
+            acknowledged,
+            int(acknowledged) if acknowledged is not None else None,
+            limit,
+        ),
     )
+
+
+def acknowledge_alert(alert_id: str, operator_id: str) -> dict[str, Any] | None:
+    alert = fetch_one("SELECT * FROM alerts WHERE id = ?", (alert_id,))
+    if alert is None:
+        return None
+    if alert["acknowledged"]:
+        return alert
+
+    acknowledged_at = datetime.now(timezone.utc).isoformat()
+    execute(
+        """
+        UPDATE alerts
+        SET acknowledged = 1, acknowledged_by = ?, acknowledged_at = ?
+        WHERE id = ? AND acknowledged = 0
+        """,
+        (operator_id, acknowledged_at, alert_id),
+    )
+    return fetch_one("SELECT * FROM alerts WHERE id = ?", (alert_id,))
