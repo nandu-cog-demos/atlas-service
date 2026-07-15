@@ -28,6 +28,17 @@ vi.mock("../hooks/useTelemetry", () => ({
   }),
 }));
 
+vi.mock("../hooks/useAlerts", () => ({
+  useAlerts: () => ({
+    alerts: [],
+    unacknowledgedCount: 0,
+    loading: false,
+    error: null,
+    acknowledge: vi.fn(),
+    refresh: vi.fn(),
+  }),
+}));
+
 describe("FleetDashboard", () => {
   it("renders the vehicle list", () => {
     render(<FleetDashboard />);
