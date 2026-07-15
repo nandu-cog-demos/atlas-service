@@ -8,6 +8,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 
 from src.api.auth import get_current_operator
 from src.api.db import create_zone, deactivate_zone, list_zones
+from src.api.geofence import invalidate_active_zones_cache
 from src.api.models import ZoneCreate, ZoneResponse
 
 router = APIRouter(prefix="/zones", tags=["zones"])
@@ -38,6 +39,7 @@ def create_geofence_zone(
         radius_m=body.radius_m,
         zone_type=body.zone_type,
     )
+    invalidate_active_zones_cache()
     return _to_response(row)
 
 
@@ -60,4 +62,5 @@ def deactivate_geofence_zone(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Zone not found",
         )
+    invalidate_active_zones_cache()
     return _to_response(row)
