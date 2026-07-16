@@ -2,12 +2,28 @@ from __future__ import annotations
 
 import sqlite3
 from datetime import datetime, timezone
+from typing import Generator
 
 import pytest
 
 from src.api import db
 
 _TS = datetime(2024, 1, 15, 12, 0, 0, tzinfo=timezone.utc)
+
+
+@pytest.fixture(autouse=True)
+def restore_vehicle_state() -> Generator[None, None, None]:
+    rows = db.fetch_all("SELECT * FROM vehicles")
+    yield
+    for row in rows:
+        db.execute(
+            "UPDATE vehicles SET status = ?, last_latitude = ?,"
+            " last_longitude = ?, last_seen = ? WHERE id = ?",
+            (
+                row["status"], row["last_latitude"], row["last_longitude"],
+                row["last_seen"], row["id"],
+            ),
+        )
 
 
 def _insert(vehicle_id: str) -> str:
@@ -43,13 +59,10 @@ def test_insert_telemetry_preserves_maintenance_status() -> None:
 
 def test_insert_telemetry_preserves_offline_status() -> None:
     db.execute("UPDATE vehicles SET status = 'offline' WHERE id = ?", ("v-002",))
-    try:
-        _insert("v-002")
-        vehicle = db.get_vehicle("v-002")
-        assert vehicle is not None
-        assert vehicle["status"] == "offline"
-    finally:
-        db.execute("UPDATE vehicles SET status = 'idle' WHERE id = ?", ("v-002",))
+    _insert("v-002")
+    vehicle = db.get_vehicle("v-002")
+    assert vehicle is not None
+    assert vehicle["status"] == "offline"
 
 
 def test_insert_telemetry_is_atomic_on_update_failure() -> None:
