@@ -113,24 +113,32 @@ def insert_telemetry(
 ) -> str:
     record_id = str(uuid4())
     now = datetime.now(timezone.utc).isoformat()
-    execute(
-        """
-        INSERT INTO telemetry
-            (id, vehicle_id, latitude, longitude, speed_kmh,
-             heading, fuel_level, timestamp, received_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-        """,
-        (
-            record_id, vehicle_id, latitude, longitude,
-            speed_kmh, heading, fuel_level,
-            timestamp.isoformat(), now,
-        ),
-    )
-    execute(
-        "UPDATE vehicles SET last_latitude = ?, last_longitude = ?,"
-        " last_seen = ?, status = 'active' WHERE id = ?",
-        (latitude, longitude, now, vehicle_id),
-    )
+    with get_cursor() as cur:
+        cur.execute(
+            """
+            INSERT INTO telemetry
+                (id, vehicle_id, latitude, longitude, speed_kmh,
+                 heading, fuel_level, timestamp, received_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                record_id, vehicle_id, latitude, longitude,
+                speed_kmh, heading, fuel_level,
+                timestamp.isoformat(), now,
+            ),
+        )
+        cur.execute(
+            """
+            UPDATE vehicles
+            SET last_latitude = ?, last_longitude = ?, last_seen = ?,
+                status = CASE
+                    WHEN status IN ('maintenance', 'offline') THEN status
+                    ELSE 'active'
+                END
+            WHERE id = ?
+            """,
+            (latitude, longitude, now, vehicle_id),
+        )
     return record_id
 
 
