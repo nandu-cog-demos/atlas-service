@@ -1,10 +1,14 @@
 from __future__ import annotations
 
-import pytest
-from fastapi.testclient import TestClient
+import os
 
-from src.api.auth import create_token
-from src.api.main import app
+os.environ.setdefault("JWT_SECRET", "test-secret")
+
+import pytest  # noqa: E402
+from fastapi.testclient import TestClient  # noqa: E402
+
+from src.api.auth import create_token  # noqa: E402
+from src.api.main import app  # noqa: E402
 
 
 @pytest.fixture()

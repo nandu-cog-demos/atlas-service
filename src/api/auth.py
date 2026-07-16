@@ -12,7 +12,18 @@ from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
 logger = logging.getLogger(__name__)
 
-JWT_SECRET = os.getenv("JWT_SECRET", "dev-secret-do-not-use")
+
+def _load_jwt_secret() -> str:
+    secret = os.getenv("JWT_SECRET")
+    if not secret:
+        raise RuntimeError(
+            "JWT_SECRET environment variable is not set; refusing to start "
+            "with an unconfigured signing secret"
+        )
+    return secret
+
+
+JWT_SECRET = _load_jwt_secret()
 JWT_ALGORITHM = "HS256"
 TOKEN_EXPIRY_HOURS = 24
 

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from datetime import datetime
 from enum import Enum
+from typing import Literal
 
 from pydantic import BaseModel, Field
 
@@ -62,7 +63,7 @@ class RouteScoreResponse(BaseModel):
 
 class OperatorSettingsUpdate(BaseModel):
     display_name: str | None = None
-    theme: str | None = None
+    theme: Literal["light", "dark", "system"] | None = None
     notifications_enabled: bool | None = None
     default_map_zoom: int | None = Field(default=None, ge=1, le=20)
 

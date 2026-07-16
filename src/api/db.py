@@ -20,6 +20,7 @@ def _get_connection() -> sqlite3.Connection:
     if _connection is None:
         _connection = sqlite3.connect(_DB_PATH, check_same_thread=False)
         _connection.row_factory = sqlite3.Row
+        _connection.execute("PRAGMA foreign_keys = ON")
         _init_schema(_connection)
     return _connection
 
@@ -113,24 +114,26 @@ def insert_telemetry(
 ) -> str:
     record_id = str(uuid4())
     now = datetime.now(timezone.utc).isoformat()
-    execute(
-        """
-        INSERT INTO telemetry
-            (id, vehicle_id, latitude, longitude, speed_kmh,
-             heading, fuel_level, timestamp, received_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-        """,
-        (
-            record_id, vehicle_id, latitude, longitude,
-            speed_kmh, heading, fuel_level,
-            timestamp.isoformat(), now,
-        ),
-    )
-    execute(
-        "UPDATE vehicles SET last_latitude = ?, last_longitude = ?,"
-        " last_seen = ?, status = 'active' WHERE id = ?",
-        (latitude, longitude, now, vehicle_id),
-    )
+    with get_cursor() as cur:
+        cur.execute(
+            """
+            INSERT INTO telemetry
+                (id, vehicle_id, latitude, longitude, speed_kmh,
+                 heading, fuel_level, timestamp, received_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                record_id, vehicle_id, latitude, longitude,
+                speed_kmh, heading, fuel_level,
+                timestamp.isoformat(), now,
+            ),
+        )
+        cur.execute(
+            "UPDATE vehicles SET last_latitude = ?, last_longitude = ?, last_seen = ?,"
+            " status = CASE WHEN status IN ('active', 'idle') THEN 'active' ELSE status END"
+            " WHERE id = ?",
+            (latitude, longitude, now, vehicle_id),
+        )
     return record_id
 
 
@@ -146,10 +149,21 @@ def get_operator(operator_id: str) -> dict[str, Any] | None:
     return fetch_one("SELECT * FROM operators WHERE id = ?", (operator_id,))
 
 
+_OPERATOR_SET_CLAUSES = {
+    "display_name": "display_name = ?",
+    "theme": "theme = ?",
+    "notifications_enabled": "notifications_enabled = ?",
+    "default_map_zoom": "default_map_zoom = ?",
+}
+
+
 def update_operator(operator_id: str, updates: dict[str, Any]) -> None:
     if not updates:
         return
-    set_clauses = ", ".join(f"{k} = ?" for k in updates)
+    unknown = set(updates) - set(_OPERATOR_SET_CLAUSES)
+    if unknown:
+        raise ValueError(f"Unknown operator columns: {sorted(unknown)}")
+    set_clauses = ", ".join(_OPERATOR_SET_CLAUSES[k] for k in updates)
     values = tuple(updates.values()) + (operator_id,)
     execute(f"UPDATE operators SET {set_clauses} WHERE id = ?", values)
 
