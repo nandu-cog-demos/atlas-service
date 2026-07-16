@@ -162,7 +162,7 @@ def update_operator(operator_id: str, updates: dict[str, Any]) -> None:
         raise ValueError(f"Unknown operator columns: {sorted(unknown)}")
     set_clauses = ", ".join(_OPERATOR_UPDATE_CLAUSES[k] for k in updates)
     values = tuple(updates.values()) + (operator_id,)
-    execute(f"UPDATE operators SET {set_clauses} WHERE id = ?", values)  # noqa: S608
+    execute(f"UPDATE operators SET {set_clauses} WHERE id = ?", values)
 
 
 def get_recent_telemetry(vehicle_id: str, limit: int = 50) -> list[dict[str, Any]]:
