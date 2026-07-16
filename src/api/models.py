@@ -6,6 +6,12 @@ from enum import Enum
 from pydantic import BaseModel, Field
 
 
+class Theme(str, Enum):
+    LIGHT = "light"
+    DARK = "dark"
+    SYSTEM = "system"
+
+
 class VehicleStatus(str, Enum):
     ACTIVE = "active"
     IDLE = "idle"
@@ -62,7 +68,7 @@ class RouteScoreResponse(BaseModel):
 
 class OperatorSettingsUpdate(BaseModel):
     display_name: str | None = None
-    theme: str | None = None
+    theme: Theme | None = None
     notifications_enabled: bool | None = None
     default_map_zoom: int | None = Field(default=None, ge=1, le=20)
 

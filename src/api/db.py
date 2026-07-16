@@ -146,12 +146,23 @@ def get_operator(operator_id: str) -> dict[str, Any] | None:
     return fetch_one("SELECT * FROM operators WHERE id = ?", (operator_id,))
 
 
+_OPERATOR_UPDATE_CLAUSES = {
+    "display_name": "display_name = ?",
+    "theme": "theme = ?",
+    "notifications_enabled": "notifications_enabled = ?",
+    "default_map_zoom": "default_map_zoom = ?",
+}
+
+
 def update_operator(operator_id: str, updates: dict[str, Any]) -> None:
     if not updates:
         return
-    set_clauses = ", ".join(f"{k} = ?" for k in updates)
+    unknown = set(updates) - set(_OPERATOR_UPDATE_CLAUSES)
+    if unknown:
+        raise ValueError(f"Unknown operator columns: {sorted(unknown)}")
+    set_clauses = ", ".join(_OPERATOR_UPDATE_CLAUSES[k] for k in updates)
     values = tuple(updates.values()) + (operator_id,)
-    execute(f"UPDATE operators SET {set_clauses} WHERE id = ?", values)
+    execute(f"UPDATE operators SET {set_clauses} WHERE id = ?", values)  # noqa: S608
 
 
 def get_recent_telemetry(vehicle_id: str, limit: int = 50) -> list[dict[str, Any]]:
