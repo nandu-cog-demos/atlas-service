@@ -31,3 +31,32 @@ def test_get_vehicle_telemetry(client: TestClient, auth_headers: dict[str, str])
     resp = client.get("/api/v1/vehicles/v-001/telemetry", headers=auth_headers)
     assert resp.status_code == 200
     assert isinstance(resp.json(), list)
+
+
+def test_get_vehicle_telemetry_negative_limit(
+    client: TestClient, auth_headers: dict[str, str]
+) -> None:
+    resp = client.get("/api/v1/vehicles/v-001/telemetry?limit=-1", headers=auth_headers)
+    assert resp.status_code == 422
+
+
+def test_get_vehicle_telemetry_zero_limit(
+    client: TestClient, auth_headers: dict[str, str]
+) -> None:
+    resp = client.get("/api/v1/vehicles/v-001/telemetry?limit=0", headers=auth_headers)
+    assert resp.status_code == 422
+
+
+def test_get_vehicle_telemetry_oversized_limit(
+    client: TestClient, auth_headers: dict[str, str]
+) -> None:
+    resp = client.get("/api/v1/vehicles/v-001/telemetry?limit=99999999", headers=auth_headers)
+    assert resp.status_code == 422
+
+
+def test_get_vehicle_telemetry_max_limit(
+    client: TestClient, auth_headers: dict[str, str]
+) -> None:
+    resp = client.get("/api/v1/vehicles/v-001/telemetry?limit=500", headers=auth_headers)
+    assert resp.status_code == 200
+    assert isinstance(resp.json(), list)
