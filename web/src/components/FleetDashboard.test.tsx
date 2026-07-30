@@ -2,6 +2,13 @@ import { render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { FleetDashboard } from "./FleetDashboard";
 
+vi.mock("../api/client", () => ({
+  fetchGeofences: () => Promise.resolve([]),
+  fetchGeofenceEvents: () => Promise.resolve({ geofence_id: "", page: 1, events: [] }),
+  createGeofence: () => Promise.resolve(null),
+  deleteGeofence: () => Promise.resolve({ status: "deleted", id: "" }),
+}));
+
 vi.mock("../hooks/useTelemetry", () => ({
   useTelemetry: () => ({
     vehicles: [
@@ -37,8 +44,8 @@ describe("FleetDashboard", () => {
   });
 
   it("displays vehicle statuses", () => {
-    render(<FleetDashboard />);
-    expect(screen.getByText("active")).toBeInTheDocument();
-    expect(screen.getByText("idle")).toBeInTheDocument();
+    const { container } = render(<FleetDashboard />);
+    expect(container.querySelector(".status-active")).toHaveTextContent("active");
+    expect(container.querySelector(".status-idle")).toHaveTextContent("idle");
   });
 });
