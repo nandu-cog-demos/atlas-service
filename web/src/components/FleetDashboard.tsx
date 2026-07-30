@@ -1,14 +1,23 @@
 import React, { useState } from "react";
 import type { Vehicle } from "../api/client";
 import { useTelemetry } from "../hooks/useTelemetry";
+import { GeofencePanel } from "./GeofencePanel";
 import { VehicleDetail } from "./VehicleDetail";
+
+const STATUS_FILTERS = ["all", "active", "idle", "maintenance", "offline"] as const;
 
 export function FleetDashboard() {
   const { vehicles, loading, error } = useTelemetry();
   const [selected, setSelected] = useState<Vehicle | null>(null);
+  const [statusFilter, setStatusFilter] = useState<string>("all");
 
   if (loading) return <div className="loading">Loading fleet data…</div>;
   if (error) return <div className="error">Error: {error}</div>;
+
+  const visible =
+    statusFilter === "all"
+      ? vehicles
+      : vehicles.filter((v) => v.status === statusFilter);
 
   return (
     <div className="dashboard">
@@ -17,7 +26,19 @@ export function FleetDashboard() {
       </header>
 
       <section className="vehicle-list">
-        <h2>Vehicles</h2>
+        <div className="vehicle-list-header">
+          <h2>Vehicles</h2>
+          <label>
+            Status:{" "}
+            <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
+              {STATUS_FILTERS.map((s) => (
+                <option key={s} value={s}>
+                  {s}
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
         <table>
           <thead>
             <tr>
@@ -27,7 +48,7 @@ export function FleetDashboard() {
             </tr>
           </thead>
           <tbody>
-            {vehicles.map((v) => (
+            {visible.map((v) => (
               <tr
                 key={v.id}
                 onClick={() => setSelected(v)}
@@ -47,6 +68,8 @@ export function FleetDashboard() {
       </section>
 
       {selected && <VehicleDetail vehicle={selected} />}
+
+      <GeofencePanel />
     </div>
   );
 }
