@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import type { Vehicle } from "../api/client";
 import { useTelemetry } from "../hooks/useTelemetry";
+import { AlertsPanel } from "./AlertsPanel";
 import { VehicleDetail } from "./VehicleDetail";
 
 export function FleetDashboard() {
@@ -47,6 +48,8 @@ export function FleetDashboard() {
       </section>
 
       {selected && <VehicleDetail vehicle={selected} />}
+
+      <AlertsPanel />
     </div>
   );
 }

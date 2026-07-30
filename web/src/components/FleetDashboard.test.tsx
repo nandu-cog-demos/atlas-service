@@ -2,6 +2,13 @@ import { render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { FleetDashboard } from "./FleetDashboard";
 
+vi.mock("../api/client", () => ({
+  fetchAlertRules: () => Promise.resolve([]),
+  fetchAlerts: () => Promise.resolve([]),
+  toggleAlertRule: () => Promise.resolve(null),
+  acknowledgeAlert: () => Promise.resolve(null),
+}));
+
 vi.mock("../hooks/useTelemetry", () => ({
   useTelemetry: () => ({
     vehicles: [
