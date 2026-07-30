@@ -60,6 +60,49 @@ class RouteScoreResponse(BaseModel):
     results: list[RouteScoreResult]
 
 
+class AlertOperator(str, Enum):
+    LT = "lt"
+    LTE = "lte"
+    GT = "gt"
+    GTE = "gte"
+
+
+class AlertSeverity(str, Enum):
+    INFO = "info"
+    WARNING = "warning"
+    CRITICAL = "critical"
+
+
+class AlertRuleCreate(BaseModel):
+    name: str = Field(min_length=1, max_length=120)
+    metric: str
+    operator: AlertOperator
+    threshold: float
+    severity: AlertSeverity = AlertSeverity.WARNING
+
+
+class AlertRuleResponse(BaseModel):
+    id: str
+    name: str
+    metric: str
+    operator: AlertOperator
+    threshold: float
+    severity: AlertSeverity
+    enabled: bool
+    created_by: str
+    created_at: datetime
+
+
+class AlertResponse(BaseModel):
+    id: str
+    rule_id: str
+    vehicle_id: str
+    metric_value: float
+    severity: AlertSeverity
+    acknowledged: bool
+    fired_at: datetime
+
+
 class OperatorSettingsUpdate(BaseModel):
     display_name: str | None = None
     theme: str | None = None

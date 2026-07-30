@@ -10,6 +10,7 @@ from fastapi import APIRouter, Depends
 from src.api.auth import get_current_operator
 from src.api.db import insert_telemetry
 from src.api.models import TelemetryPayload, TelemetryResponse
+from src.ml.alert_engine import evaluate_snapshot
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/telemetry", tags=["telemetry"])
@@ -30,6 +31,12 @@ def ingest_telemetry(
         fuel_level=payload.fuel_level,
         timestamp=payload.timestamp,
     )
+    fired = evaluate_snapshot(
+        payload.vehicle_id,
+        {"fuel_level": payload.fuel_level, "speed_kmh": payload.speed_kmh},
+    )
+    if fired:
+        logger.info("%d alert(s) fired for vehicle %s", len(fired), payload.vehicle_id)
     return TelemetryResponse(
         id=record_id,
         vehicle_id=payload.vehicle_id,
