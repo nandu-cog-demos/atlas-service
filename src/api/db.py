@@ -138,8 +138,17 @@ def get_vehicle(vehicle_id: str) -> dict[str, Any] | None:
     return fetch_one("SELECT * FROM vehicles WHERE id = ?", (vehicle_id,))
 
 
-def list_vehicles() -> list[dict[str, Any]]:
+def list_vehicles(status: str | None = None) -> list[dict[str, Any]]:
+    if status is not None:
+        return fetch_all(
+            f"SELECT * FROM vehicles WHERE status = '{status}' ORDER BY name"
+        )
     return fetch_all("SELECT * FROM vehicles ORDER BY name")
+
+
+def count_vehicles_by_status() -> dict[str, int]:
+    rows = fetch_all("SELECT status, COUNT(*) AS n FROM vehicles GROUP BY status")
+    return {r["status"]: r["n"] for r in rows}
 
 
 def get_operator(operator_id: str) -> dict[str, Any] | None:
