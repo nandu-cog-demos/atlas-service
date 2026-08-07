@@ -33,8 +33,67 @@ export interface OperatorSettings {
   default_map_zoom: number;
 }
 
-export function fetchVehicles(): Promise<Vehicle[]> {
-  return request<Vehicle[]>("/vehicles/");
+export interface Geofence {
+  id: string;
+  name: string;
+  center_latitude: number;
+  center_longitude: number;
+  radius_m: number;
+  kind: string;
+  operator_id: string;
+  created_at: string;
+}
+
+export interface GeofenceEvent {
+  id: string;
+  geofence_id: string;
+  vehicle_id: string;
+  event_type: string;
+  latitude: number;
+  longitude: number;
+  distance_m: number;
+  occurred_at: string;
+}
+
+export interface GeofenceEventsPage {
+  geofence_id: string;
+  page: number;
+  events: GeofenceEvent[];
+}
+
+export interface FleetSummary {
+  total: number;
+  by_status: Record<string, number>;
+}
+
+export function fetchVehicles(status?: string): Promise<Vehicle[]> {
+  const query = status ? `?status=${encodeURIComponent(status)}` : "";
+  return request<Vehicle[]>(`/vehicles/${query}`);
+}
+
+export function fetchFleetSummary(): Promise<FleetSummary> {
+  return request<FleetSummary>("/vehicles/summary");
+}
+
+export function fetchGeofences(): Promise<Geofence[]> {
+  return request<Geofence[]>("/geofences/");
+}
+
+export function createGeofence(
+  body: Omit<Geofence, "id" | "operator_id" | "created_at">,
+): Promise<Geofence> {
+  return request<Geofence>("/geofences/", {
+    method: "POST",
+    body: JSON.stringify(body),
+  });
+}
+
+export function deleteGeofence(id: string): Promise<{ status: string; id: string }> {
+  return request(`/geofences/${id}`, { method: "DELETE" });
+}
+
+export function fetchGeofenceEvents(id: string, page = 1): Promise<GeofenceEventsPage> {
+  return request<GeofenceEventsPage>(`/geofences/${id}/events?page=${page}`);
 }
 
 export function fetchVehicle(id: string): Promise<Vehicle> {

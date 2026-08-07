@@ -60,6 +60,30 @@ class RouteScoreResponse(BaseModel):
     results: list[RouteScoreResult]
 
 
+class GeofenceKind(str, Enum):
+    INCLUSION = "inclusion"
+    EXCLUSION = "exclusion"
+
+
+class GeofenceCreate(BaseModel):
+    name: str = Field(min_length=1, max_length=120)
+    center_latitude: float = Field(ge=-90, le=90)
+    center_longitude: float = Field(ge=-180, le=180)
+    radius_m: float = Field(gt=0)
+    kind: GeofenceKind = GeofenceKind.INCLUSION
+
+
+class GeofenceResponse(BaseModel):
+    id: str
+    name: str
+    center_latitude: float
+    center_longitude: float
+    radius_m: float
+    kind: str
+    operator_id: str
+    created_at: datetime
+
+
 class OperatorSettingsUpdate(BaseModel):
     display_name: str | None = None
     theme: str | None = None
