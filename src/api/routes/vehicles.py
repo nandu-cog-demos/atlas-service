@@ -4,10 +4,10 @@ from __future__ import annotations
 
 import logging
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Response, status
 
 from src.api.auth import get_current_operator
-from src.api.db import get_recent_telemetry, get_vehicle, list_vehicles
+from src.api.db import delete_vehicle, get_recent_telemetry, get_vehicle, list_vehicles
 from src.api.models import VehicleResponse, VehicleStatus
 
 logger = logging.getLogger(__name__)
@@ -48,6 +48,22 @@ def get_vehicle_detail(
         last_longitude=row["last_longitude"],
         last_seen=row["last_seen"],
     )
+
+
+@router.delete(
+    "/{vehicle_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    response_class=Response,
+    response_model=None,
+)
+def delete_vehicle_endpoint(
+    vehicle_id: str,
+    operator_id: str = Depends(get_current_operator),
+) -> None:
+    vehicle = get_vehicle(vehicle_id)
+    if not vehicle:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Vehicle not found")
+    delete_vehicle(vehicle_id)
 
 
 @router.get("/{vehicle_id}/telemetry")

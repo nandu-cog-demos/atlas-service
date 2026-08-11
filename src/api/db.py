@@ -138,6 +138,11 @@ def get_vehicle(vehicle_id: str) -> dict[str, Any] | None:
     return fetch_one("SELECT * FROM vehicles WHERE id = ?", (vehicle_id,))
 
 
+def delete_vehicle(vehicle_id: str) -> None:
+    execute("DELETE FROM telemetry WHERE vehicle_id = ?", (vehicle_id,))
+    execute("DELETE FROM vehicles WHERE id = ?", (vehicle_id,))
+
+
 def list_vehicles() -> list[dict[str, Any]]:
     return fetch_all("SELECT * FROM vehicles ORDER BY name")
 
