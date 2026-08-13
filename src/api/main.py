@@ -6,9 +6,12 @@ import logging
 
 from fastapi import FastAPI
 
+from src.api.auth import get_jwt_secret
 from src.api.routes import routes, settings, telemetry, vehicles
 
 logging.basicConfig(level=logging.INFO, format="%(levelname)s %(name)s: %(message)s")
+
+get_jwt_secret()
 
 app = FastAPI(
     title="Atlas Service",
