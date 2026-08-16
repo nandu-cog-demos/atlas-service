@@ -2,13 +2,29 @@ import React, { useEffect, useState } from "react";
 import type { OperatorSettings as Settings } from "../api/client";
 import { fetchSettings, updateSettings } from "../api/client";
 
+interface OperatorPreferences {
+  preferences: {
+    theme: string;
+    notifications: boolean;
+  };
+}
+
 export function OperatorSettings() {
   const [settings, setSettings] = useState<Settings | null>(null);
+  const [operator, setOperator] = useState<OperatorPreferences | null>(null);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     fetchSettings()
-      .then(setSettings)
+      .then((data) => {
+        setSettings(data);
+        setOperator({
+          preferences: {
+            theme: data.theme,
+            notifications: data.notifications_enabled,
+          },
+        });
+      })
       .catch(console.error);
   }, []);
 
@@ -24,7 +40,7 @@ export function OperatorSettings() {
     }
   };
 
-  const currentTheme = settings.theme ?? "system";
+  const currentTheme = operator.preferences.theme;
 
   return (
     <section className="operator-settings">
