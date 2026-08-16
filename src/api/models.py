@@ -73,3 +73,41 @@ class OperatorSettingsResponse(BaseModel):
     theme: str
     notifications_enabled: bool
     default_map_zoom: int
+
+
+class Certification(BaseModel):
+    name: str
+    status: str
+    description: str
+
+
+class SecurityPractice(BaseModel):
+    category: str
+    items: list[str]
+
+
+class Subprocessor(BaseModel):
+    name: str
+    purpose: str
+    location: str
+
+
+class ServiceStatus(BaseModel):
+    state: str
+    uptime_90d: float
+    status_page_url: str
+
+
+class TrustResource(BaseModel):
+    label: str
+    url: str
+
+
+class TrustCenterResponse(BaseModel):
+    overview: str
+    last_updated: str
+    certifications: list[Certification]
+    security_practices: list[SecurityPractice]
+    subprocessors: list[Subprocessor]
+    service_status: ServiceStatus
+    resources: list[TrustResource]
