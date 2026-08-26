@@ -10,10 +10,15 @@ export function FleetDashboard() {
   if (loading) return <div className="loading">Loading fleet data…</div>;
   if (error) return <div className="error">Error: {error}</div>;
 
+  const vehicleCount = vehicles.length;
+
   return (
     <div className="dashboard">
       <header>
         <h1>Atlas Fleet Dashboard</h1>
+        <span className="vehicle-count-badge">
+          {vehicleCount} {vehicleCount === 1 ? "vehicle" : "vehicles"}
+        </span>
       </header>
 
       <section className="vehicle-list">
