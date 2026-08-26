@@ -6,7 +6,9 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 COPY src/ src/
-COPY .env.example .env
+
+# JWT_SECRET must be supplied at runtime, e.g.:
+#   docker run -e JWT_SECRET=... <image>
 
 EXPOSE 8000
 
