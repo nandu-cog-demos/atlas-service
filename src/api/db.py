@@ -142,6 +142,17 @@ def list_vehicles() -> list[dict[str, Any]]:
     return fetch_all("SELECT * FROM vehicles ORDER BY name")
 
 
+# Static allowlist of updatable operator columns, one literal SET fragment each, so
+# no caller-supplied string can reach the SQL text. Kept in sync with the fields of
+# OperatorSettingsUpdate (enforced by tests).
+OPERATOR_SET_CLAUSES: dict[str, str] = {
+    "display_name": "display_name = ?",
+    "theme": "theme = ?",
+    "notifications_enabled": "notifications_enabled = ?",
+    "default_map_zoom": "default_map_zoom = ?",
+}
+
+
 def get_operator(operator_id: str) -> dict[str, Any] | None:
     return fetch_one("SELECT * FROM operators WHERE id = ?", (operator_id,))
 
@@ -149,9 +160,12 @@ def get_operator(operator_id: str) -> dict[str, Any] | None:
 def update_operator(operator_id: str, updates: dict[str, Any]) -> None:
     if not updates:
         return
-    set_clauses = ", ".join(f"{k} = ?" for k in updates)
+    unknown = sorted(set(updates) - set(OPERATOR_SET_CLAUSES))
+    if unknown:
+        raise ValueError(f"Unsupported operator column(s): {', '.join(unknown)}")
+    set_clauses = ", ".join(OPERATOR_SET_CLAUSES[k] for k in updates)
     values = tuple(updates.values()) + (operator_id,)
-    execute(f"UPDATE operators SET {set_clauses} WHERE id = ?", values)
+    execute("UPDATE operators SET " + set_clauses + " WHERE id = ?", values)
 
 
 def get_recent_telemetry(vehicle_id: str, limit: int = 50) -> list[dict[str, Any]]:
