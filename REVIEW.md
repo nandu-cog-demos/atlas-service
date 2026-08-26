@@ -36,11 +36,6 @@
 - New backend behavior should have coverage in `tests/`; new frontend
   components should have a co-located `*.test.tsx`.
 
-## Intentional Exceptions
-
-- The `retry_unsafe()` helper in `src/utils/legacy.py` is intentional —
-  do not flag it.
-
 ## Ignore
 
 - Serialized model artifacts in `models/` (`*.pkl`) do not need review.

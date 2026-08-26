@@ -41,9 +41,11 @@ def test_extract_route_features() -> None:
 def test_score_route() -> None:
     candidate = _make_candidate("r1", [(37.77, -122.42), (37.78, -122.43)], 10.0)
     result = score_route(candidate, SAMPLE_TELEMETRY)
+    assert result == {"route_id": "r1", "score": 0.5399, "eta_minutes": 1.48}
     assert result["route_id"] == "r1"
     assert result["score"] >= 0
     assert result["eta_minutes"] >= 0
+    assert result == score_routes_batch([candidate], SAMPLE_TELEMETRY)[0]
 
 
 def test_score_routes_batch() -> None:
@@ -52,6 +54,10 @@ def test_score_routes_batch() -> None:
         _make_candidate("r2", [(37.77, -122.42), (37.80, -122.45), (37.82, -122.47)], 20.0),
     ]
     results = score_routes_batch(candidates, SAMPLE_TELEMETRY)
+    assert results == [
+        {"route_id": "r1", "score": 0.5399, "eta_minutes": 1.48},
+        {"route_id": "r2", "score": 0.2299, "eta_minutes": 7.39},
+    ]
     assert len(results) == 2
     assert results[0]["score"] >= results[1]["score"]
 
