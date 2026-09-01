@@ -6,6 +6,11 @@ from enum import Enum
 from pydantic import BaseModel, Field
 
 
+class HealthResponse(BaseModel):
+    status: str
+    version: str
+
+
 class VehicleStatus(str, Enum):
     ACTIVE = "active"
     IDLE = "idle"
