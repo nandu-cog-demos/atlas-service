@@ -57,6 +57,17 @@ def _init_schema(conn: sqlite3.Connection) -> None:
             default_map_zoom INTEGER NOT NULL DEFAULT 12
         );
 
+        CREATE TABLE IF NOT EXISTS zones (
+            id TEXT PRIMARY KEY,
+            name TEXT NOT NULL,
+            center_latitude REAL NOT NULL,
+            center_longitude REAL NOT NULL,
+            radius_m REAL NOT NULL,
+            zone_type TEXT NOT NULL CHECK (zone_type IN ('restricted', 'site')),
+            active INTEGER NOT NULL DEFAULT 1,
+            created_at TEXT NOT NULL
+        );
+
         INSERT OR IGNORE INTO vehicles (id, name, status, last_latitude, last_longitude, last_seen)
         VALUES
             ('v-001', 'Truck Alpha', 'active', 37.7749, -122.4194, '2024-01-15T10:30:00Z'),
@@ -159,3 +170,54 @@ def get_recent_telemetry(vehicle_id: str, limit: int = 50) -> list[dict[str, Any
         "SELECT * FROM telemetry WHERE vehicle_id = ? ORDER BY timestamp DESC LIMIT ?",
         (vehicle_id, limit),
     )
+
+
+def create_zone(
+    name: str,
+    center_latitude: float,
+    center_longitude: float,
+    radius_m: float,
+    zone_type: str,
+) -> dict[str, Any]:
+    zone_id = str(uuid4())
+    created_at = datetime.now(timezone.utc).isoformat()
+    execute(
+        """
+        INSERT INTO zones
+            (id, name, center_latitude, center_longitude, radius_m,
+             zone_type, active, created_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        """,
+        (
+            zone_id,
+            name,
+            center_latitude,
+            center_longitude,
+            radius_m,
+            zone_type,
+            1,
+            created_at,
+        ),
+    )
+    row = get_zone(zone_id)
+    if row is None:
+        raise RuntimeError("Zone was not created")
+    return row
+
+
+def get_zone(zone_id: str) -> dict[str, Any] | None:
+    return fetch_one("SELECT * FROM zones WHERE id = ?", (zone_id,))
+
+
+def list_zones(active: bool | None = None) -> list[dict[str, Any]]:
+    if active is None:
+        return fetch_all("SELECT * FROM zones ORDER BY created_at DESC")
+    return fetch_all(
+        "SELECT * FROM zones WHERE active = ? ORDER BY created_at DESC",
+        (int(active),),
+    )
+
+
+def deactivate_zone(zone_id: str) -> dict[str, Any] | None:
+    execute("UPDATE zones SET active = 0 WHERE id = ?", (zone_id,))
+    return get_zone(zone_id)

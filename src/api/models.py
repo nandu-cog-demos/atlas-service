@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from datetime import datetime
 from enum import Enum
+from typing import Literal
 
 from pydantic import BaseModel, Field
 
@@ -73,3 +74,22 @@ class OperatorSettingsResponse(BaseModel):
     theme: str
     notifications_enabled: bool
     default_map_zoom: int
+
+
+class ZoneCreate(BaseModel):
+    name: str
+    center_latitude: float = Field(ge=-90, le=90)
+    center_longitude: float = Field(ge=-180, le=180)
+    radius_m: float = Field(gt=0)
+    zone_type: Literal["restricted", "site"]
+
+
+class ZoneResponse(BaseModel):
+    id: str
+    name: str
+    center_latitude: float
+    center_longitude: float
+    radius_m: float
+    zone_type: Literal["restricted", "site"]
+    active: bool
+    created_at: datetime
