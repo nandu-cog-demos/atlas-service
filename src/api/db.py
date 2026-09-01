@@ -159,3 +159,10 @@ def get_recent_telemetry(vehicle_id: str, limit: int = 50) -> list[dict[str, Any
         "SELECT * FROM telemetry WHERE vehicle_id = ? ORDER BY timestamp DESC LIMIT ?",
         (vehicle_id, limit),
     )
+
+
+def get_latest_telemetry(vehicle_id: str) -> dict[str, Any] | None:
+    return fetch_one(
+        "SELECT * FROM telemetry WHERE vehicle_id = ? ORDER BY timestamp DESC LIMIT 1",
+        (vehicle_id,),
+    )

@@ -7,8 +7,8 @@ import logging
 from fastapi import APIRouter, Depends, HTTPException, status
 
 from src.api.auth import get_current_operator
-from src.api.db import get_recent_telemetry, get_vehicle, list_vehicles
-from src.api.models import VehicleResponse, VehicleStatus
+from src.api.db import get_latest_telemetry, get_recent_telemetry, get_vehicle, list_vehicles
+from src.api.models import TelemetryRecordResponse, VehicleResponse, VehicleStatus
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/vehicles", tags=["vehicles"])
@@ -48,6 +48,22 @@ def get_vehicle_detail(
         last_longitude=row["last_longitude"],
         last_seen=row["last_seen"],
     )
+
+
+@router.get("/{vehicle_id}/telemetry/latest", response_model=TelemetryRecordResponse)
+def get_vehicle_latest_telemetry(
+    vehicle_id: str,
+    operator_id: str = Depends(get_current_operator),
+) -> TelemetryRecordResponse:
+    vehicle = get_vehicle(vehicle_id)
+    if not vehicle:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Vehicle not found")
+    record = get_latest_telemetry(vehicle_id)
+    if not record:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="No telemetry for vehicle"
+        )
+    return TelemetryRecordResponse(**record)
 
 
 @router.get("/{vehicle_id}/telemetry")

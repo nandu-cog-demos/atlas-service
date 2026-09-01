@@ -29,6 +29,18 @@ class TelemetryResponse(BaseModel):
     received_at: datetime
 
 
+class TelemetryRecordResponse(BaseModel):
+    id: str
+    vehicle_id: str
+    latitude: float
+    longitude: float
+    speed_kmh: float
+    heading: float
+    fuel_level: float
+    timestamp: datetime
+    received_at: datetime
+
+
 class VehicleResponse(BaseModel):
     id: str
     name: str
