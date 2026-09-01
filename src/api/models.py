@@ -38,6 +38,12 @@ class VehicleResponse(BaseModel):
     last_seen: datetime | None = None
 
 
+class FleetSummaryResponse(BaseModel):
+    total_vehicles: int
+    status_counts: dict[VehicleStatus, int]
+    average_fuel_level: float | None = None
+
+
 class RouteCandidate(BaseModel):
     route_id: str
     waypoints: list[tuple[float, float]]
