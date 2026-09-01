@@ -20,6 +20,7 @@ def _get_connection() -> sqlite3.Connection:
     if _connection is None:
         _connection = sqlite3.connect(_DB_PATH, check_same_thread=False)
         _connection.row_factory = sqlite3.Row
+        _connection.execute("PRAGMA foreign_keys = ON")
         _init_schema(_connection)
     return _connection
 
