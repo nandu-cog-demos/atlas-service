@@ -7,6 +7,8 @@ from typing import Any
 
 from src.ml.features import extract_route_features, extract_telemetry_context
 
+DEFAULT_BATCH_SIZE = 10
+
 
 def score_route(candidate: Any, telemetry: list[dict[str, Any]]) -> dict[str, Any]:
     """Score a single route candidate against recent telemetry.
@@ -31,15 +33,13 @@ def score_route(candidate: Any, telemetry: list[dict[str, Any]]) -> dict[str, An
     }
 
 
-def score_routes_batch(
-    candidates: list[Any],
-    telemetry: list[dict[str, Any]],
+def _score_chunk(
+    chunk: list[Any],
+    context: dict[str, Any],
 ) -> list[dict[str, Any]]:
-    """Score a batch of route candidates. Preferred over per-item calls."""
-    context = extract_telemetry_context(telemetry)
+    """Score a chunk of route candidates sharing a pre-computed context."""
     results: list[dict[str, Any]] = []
-
-    for candidate in candidates:
+    for candidate in chunk:
         features = extract_route_features(candidate, context)
 
         distance_factor = 1.0 / (1.0 + features["normalized_distance"])
@@ -59,6 +59,26 @@ def score_routes_batch(
                 "eta_minutes": eta,
             }
         )
+    return results
+
+
+def score_routes_batch(
+    candidates: list[Any],
+    telemetry: list[dict[str, Any]],
+    batch_size: int = DEFAULT_BATCH_SIZE,
+) -> list[dict[str, Any]]:
+    """Score a batch of route candidates. Preferred over per-item calls.
+
+    Splits candidates into chunks of ``batch_size`` for memory-efficient
+    processing, then merges and sorts the results.
+    """
+    context = extract_telemetry_context(telemetry)
+    n = len(candidates)
+    results: list[dict[str, Any]] = []
+
+    for start in range(0, n, batch_size):
+        chunk = candidates[start:start + batch_size]
+        results.extend(_score_chunk(chunk, context))
 
     results.sort(key=lambda r: r["score"], reverse=True)
     return results
