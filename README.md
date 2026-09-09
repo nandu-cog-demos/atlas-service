@@ -8,7 +8,13 @@ API and a web dashboard.
 ## Features
 
 - **Telemetry ingestion** — high-throughput endpoint for GPS + sensor
-  payloads from fleet devices.
+  payloads from fleet devices, plus a batch endpoint
+  (`POST /api/v1/telemetry/batch`) for buffered uploads.
+- **Fleet summary** — `GET /api/v1/vehicles/summary` returns counts by
+  status, average fuel/speed from latest telemetry, and stale-vehicle counts.
+- **Vehicle management** — filter vehicles by status
+  (`GET /api/v1/vehicles/?status=idle`) and update operational status
+  (`PATCH /api/v1/vehicles/{id}/status`).
 - **Route scoring** — a lightweight inference module that ranks candidate
   routes and predicts ETAs from recent telemetry.
 - **Operator dashboard** — a React/TypeScript UI for monitoring live fleet

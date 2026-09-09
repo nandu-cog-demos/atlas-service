@@ -138,8 +138,33 @@ def get_vehicle(vehicle_id: str) -> dict[str, Any] | None:
     return fetch_one("SELECT * FROM vehicles WHERE id = ?", (vehicle_id,))
 
 
-def list_vehicles() -> list[dict[str, Any]]:
-    return fetch_all("SELECT * FROM vehicles ORDER BY name")
+def list_vehicles(status: str | None = None) -> list[dict[str, Any]]:
+    if status is None:
+        return fetch_all("SELECT * FROM vehicles ORDER BY name")
+    return fetch_all("SELECT * FROM vehicles WHERE status = ? ORDER BY name", (status,))
+
+
+def update_vehicle_status(vehicle_id: str, status: str) -> None:
+    execute("UPDATE vehicles SET status = ? WHERE id = ?", (status, vehicle_id))
+
+
+def count_vehicles_by_status() -> dict[str, int]:
+    rows = fetch_all("SELECT status, COUNT(*) AS n FROM vehicles GROUP BY status")
+    return {r["status"]: r["n"] for r in rows}
+
+
+def get_latest_telemetry_per_vehicle() -> list[dict[str, Any]]:
+    return fetch_all(
+        """
+        SELECT t.*
+        FROM telemetry t
+        JOIN (
+            SELECT vehicle_id, MAX(timestamp) AS max_ts
+            FROM telemetry GROUP BY vehicle_id
+        ) latest
+          ON latest.vehicle_id = t.vehicle_id AND latest.max_ts = t.timestamp
+        """
+    )
 
 
 def get_operator(operator_id: str) -> dict[str, Any] | None:
