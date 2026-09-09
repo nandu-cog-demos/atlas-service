@@ -33,8 +33,34 @@ export interface OperatorSettings {
   default_map_zoom: number;
 }
 
-export function fetchVehicles(): Promise<Vehicle[]> {
-  return request<Vehicle[]>("/vehicles/");
+export type VehicleStatus = Vehicle["status"];
+
+export interface FleetSummary {
+  total_vehicles: number;
+  by_status: Record<VehicleStatus, number>;
+  average_fuel_level: number | null;
+  average_speed_kmh: number | null;
+  stale_vehicles: number;
+  stale_threshold_minutes: number;
+}
+
+export function fetchVehicles(status?: VehicleStatus): Promise<Vehicle[]> {
+  const query = status ? `?status=${encodeURIComponent(status)}` : "";
+  return request<Vehicle[]>(`/vehicles/${query}`);
+}
+
+export function fetchFleetSummary(): Promise<FleetSummary> {
+  return request<FleetSummary>("/vehicles/summary");
+}
+
+export function updateVehicleStatus(
+  id: string,
+  status: VehicleStatus,
+): Promise<Vehicle> {
+  return request<Vehicle>(`/vehicles/${id}/status`, {
+    method: "PATCH",
+    body: JSON.stringify({ status }),
+  });
 }
 
 export function fetchVehicle(id: string): Promise<Vehicle> {

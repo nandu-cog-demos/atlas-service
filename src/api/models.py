@@ -29,6 +29,17 @@ class TelemetryResponse(BaseModel):
     received_at: datetime
 
 
+class TelemetryBatchRequest(BaseModel):
+    records: list[TelemetryPayload] = Field(min_length=1, max_length=500)
+
+
+class TelemetryBatchResponse(BaseModel):
+    accepted: int
+    rejected: int
+    rejected_vehicle_ids: list[str]
+    received_at: datetime
+
+
 class VehicleResponse(BaseModel):
     id: str
     name: str
@@ -36,6 +47,19 @@ class VehicleResponse(BaseModel):
     last_latitude: float | None = None
     last_longitude: float | None = None
     last_seen: datetime | None = None
+
+
+class VehicleStatusUpdate(BaseModel):
+    status: VehicleStatus
+
+
+class FleetSummaryResponse(BaseModel):
+    total_vehicles: int
+    by_status: dict[VehicleStatus, int]
+    average_fuel_level: float | None = None
+    average_speed_kmh: float | None = None
+    stale_vehicles: int
+    stale_threshold_minutes: int
 
 
 class RouteCandidate(BaseModel):
