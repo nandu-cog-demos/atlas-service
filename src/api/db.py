@@ -20,6 +20,7 @@ def _get_connection() -> sqlite3.Connection:
     if _connection is None:
         _connection = sqlite3.connect(_DB_PATH, check_same_thread=False)
         _connection.row_factory = sqlite3.Row
+        _connection.execute("PRAGMA foreign_keys = ON")
         _init_schema(_connection)
     return _connection
 
@@ -136,6 +137,10 @@ def insert_telemetry(
 
 def get_vehicle(vehicle_id: str) -> dict[str, Any] | None:
     return fetch_one("SELECT * FROM vehicles WHERE id = ?", (vehicle_id,))
+
+
+def vehicle_exists(vehicle_id: str) -> bool:
+    return fetch_one("SELECT 1 FROM vehicles WHERE id = ?", (vehicle_id,)) is not None
 
 
 def list_vehicles() -> list[dict[str, Any]]:
