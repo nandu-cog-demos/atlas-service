@@ -27,6 +27,8 @@ jobs:
           python-version: "3.11"
       - run: pip install -r requirements.txt
       - run: pytest
+        env:
+          JWT_SECRET: ci-test-secret
 
   frontend:
     runs-on: ubuntu-latest

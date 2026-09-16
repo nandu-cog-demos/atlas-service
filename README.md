@@ -39,7 +39,7 @@ cd web && npm install && npm run dev
 Copy `.env.example` to `.env` and set:
 
 - `DATABASE_URL` — Postgres connection string
-- `JWT_SECRET` — signing secret for operator tokens
+- `JWT_SECRET` — signing secret for operator tokens (required; the service refuses to start without it)
 - `MODEL_PATH` — path to the route-scoring model artifact
 
 ## Testing
