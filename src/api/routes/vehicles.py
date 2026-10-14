@@ -7,7 +7,12 @@ import logging
 from fastapi import APIRouter, Depends, HTTPException, status
 
 from src.api.auth import get_current_operator
-from src.api.db import get_recent_telemetry, get_vehicle, list_vehicles
+from src.api.db import (
+    count_vehicles_by_status,
+    get_recent_telemetry,
+    get_vehicle,
+    list_vehicles,
+)
 from src.api.models import VehicleResponse, VehicleStatus
 
 logger = logging.getLogger(__name__)
@@ -16,9 +21,10 @@ router = APIRouter(prefix="/vehicles", tags=["vehicles"])
 
 @router.get("/", response_model=list[VehicleResponse])
 def get_vehicles(
+    status: str | None = None,
     operator_id: str = Depends(get_current_operator),
 ) -> list[VehicleResponse]:
-    rows = list_vehicles()
+    rows = list_vehicles(status=status)
     return [
         VehicleResponse(
             id=r["id"],
@@ -30,6 +36,14 @@ def get_vehicles(
         )
         for r in rows
     ]
+
+
+@router.get("/summary")
+def get_fleet_summary(
+    operator_id: str = Depends(get_current_operator),
+) -> dict[str, object]:
+    counts = count_vehicles_by_status()
+    return {"total": sum(counts.values()), "by_status": counts}
 
 
 @router.get("/{vehicle_id}", response_model=VehicleResponse)

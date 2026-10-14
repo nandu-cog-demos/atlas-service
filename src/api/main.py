@@ -6,7 +6,7 @@ import logging
 
 from fastapi import FastAPI
 
-from src.api.routes import routes, settings, telemetry, vehicles
+from src.api.routes import geofences, routes, settings, telemetry, vehicles
 
 logging.basicConfig(level=logging.INFO, format="%(levelname)s %(name)s: %(message)s")
 
@@ -20,6 +20,7 @@ app.include_router(telemetry.router, prefix="/api/v1")
 app.include_router(vehicles.router, prefix="/api/v1")
 app.include_router(routes.router, prefix="/api/v1")
 app.include_router(settings.router, prefix="/api/v1")
+app.include_router(geofences.router, prefix="/api/v1")
 
 
 @app.get("/health")
