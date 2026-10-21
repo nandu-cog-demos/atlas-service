@@ -5,6 +5,7 @@ from __future__ import annotations
 import logging
 
 from fastapi import FastAPI
+from pydantic import BaseModel
 
 from src.api.routes import routes, settings, telemetry, vehicles
 
@@ -22,6 +23,11 @@ app.include_router(routes.router, prefix="/api/v1")
 app.include_router(settings.router, prefix="/api/v1")
 
 
-@app.get("/health", summary="Liveness check with service version")
-def health() -> dict[str, str]:
-    return {"status": "ok", "version": app.version}
+class HealthResponse(BaseModel):
+    status: str
+    version: str
+
+
+@app.get("/health", summary="Liveness check with service version", response_model=HealthResponse)
+def health() -> HealthResponse:
+    return HealthResponse(status="ok", version=app.version)
