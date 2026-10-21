@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import logging
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 
 from src.api.auth import get_current_operator
 from src.api.db import get_recent_telemetry, get_vehicle, list_vehicles
@@ -53,7 +53,7 @@ def get_vehicle_detail(
 @router.get("/{vehicle_id}/telemetry")
 def get_vehicle_telemetry(
     vehicle_id: str,
-    limit: int = 50,
+    limit: int = Query(50, ge=1, le=500),
     operator_id: str = Depends(get_current_operator),
 ) -> list[dict]:
     vehicle = get_vehicle(vehicle_id)
