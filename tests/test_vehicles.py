@@ -31,3 +31,14 @@ def test_get_vehicle_telemetry(client: TestClient, auth_headers: dict[str, str])
     resp = client.get("/api/v1/vehicles/v-001/telemetry", headers=auth_headers)
     assert resp.status_code == 200
     assert isinstance(resp.json(), list)
+
+
+def test_get_vehicle_telemetry_limit_bounds(
+    client: TestClient, auth_headers: dict[str, str]
+) -> None:
+    for limit in (0, -1, 501):
+        resp = client.get(f"/api/v1/vehicles/v-001/telemetry?limit={limit}", headers=auth_headers)
+        assert resp.status_code == 422
+    for limit in (1, 500):
+        resp = client.get(f"/api/v1/vehicles/v-001/telemetry?limit={limit}", headers=auth_headers)
+        assert resp.status_code == 200
