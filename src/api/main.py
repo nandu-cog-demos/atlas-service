@@ -22,6 +22,6 @@ app.include_router(routes.router, prefix="/api/v1")
 app.include_router(settings.router, prefix="/api/v1")
 
 
-@app.get("/health")
+@app.get("/health", summary="Liveness check with service version")
 def health() -> dict[str, str]:
-    return {"status": "ok"}
+    return {"status": "ok", "version": app.version}
