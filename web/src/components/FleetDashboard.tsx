@@ -1,17 +1,17 @@
 import React, { useState } from "react";
-import type { Vehicle } from "../api/client";
 import { useTelemetry } from "../hooks/useTelemetry";
 import { FuelBadge } from "./FuelBadge";
 import { VehicleDetail } from "./VehicleDetail";
 
 export function FleetDashboard() {
   const { vehicles, loading, error } = useTelemetry();
-  const [selected, setSelected] = useState<Vehicle | null>(null);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
   const [lowFuelOnly, setLowFuelOnly] = useState(false);
 
   if (loading) return <div className="loading">Loading fleet data…</div>;
   if (error) return <div className="error">Error: {error}</div>;
 
+  const selected = vehicles.find((v) => v.id === selectedId) ?? null;
   const lowFuelCount = vehicles.filter((v) => v.low_fuel).length;
   const visible = lowFuelOnly ? vehicles.filter((v) => v.low_fuel) : vehicles;
 
@@ -47,9 +47,9 @@ export function FleetDashboard() {
             {visible.map((v) => (
               <tr
                 key={v.id}
-                onClick={() => setSelected(v)}
+                onClick={() => setSelectedId(v.id)}
                 className={[
-                  selected?.id === v.id ? "selected" : "",
+                  selectedId === v.id ? "selected" : "",
                   v.low_fuel ? "low-fuel-row" : "",
                 ]
                   .filter(Boolean)
