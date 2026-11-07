@@ -33,7 +33,8 @@ def _init_schema(conn: sqlite3.Connection) -> None:
             status TEXT NOT NULL DEFAULT 'idle',
             last_latitude REAL,
             last_longitude REAL,
-            last_seen TEXT
+            last_seen TEXT,
+            fuel_level REAL
         );
 
         CREATE TABLE IF NOT EXISTS telemetry (
@@ -57,11 +58,12 @@ def _init_schema(conn: sqlite3.Connection) -> None:
             default_map_zoom INTEGER NOT NULL DEFAULT 12
         );
 
-        INSERT OR IGNORE INTO vehicles (id, name, status, last_latitude, last_longitude, last_seen)
+        INSERT OR IGNORE INTO vehicles
+            (id, name, status, last_latitude, last_longitude, last_seen, fuel_level)
         VALUES
-            ('v-001', 'Truck Alpha', 'active', 37.7749, -122.4194, '2024-01-15T10:30:00Z'),
-            ('v-002', 'Van Bravo', 'idle', 37.3382, -121.8863, '2024-01-15T09:15:00Z'),
-            ('v-003', 'Truck Charlie', 'maintenance', NULL, NULL, NULL);
+            ('v-001', 'Truck Alpha', 'active', 37.7749, -122.4194, '2024-01-15T10:30:00Z', 62.5),
+            ('v-002', 'Van Bravo', 'idle', 37.3382, -121.8863, '2024-01-15T09:15:00Z', 11.0),
+            ('v-003', 'Truck Charlie', 'maintenance', NULL, NULL, NULL, NULL);
 
         INSERT OR IGNORE INTO operators (id, display_name)
         VALUES
@@ -128,8 +130,8 @@ def insert_telemetry(
     )
     execute(
         "UPDATE vehicles SET last_latitude = ?, last_longitude = ?,"
-        " last_seen = ?, status = 'active' WHERE id = ?",
-        (latitude, longitude, now, vehicle_id),
+        " last_seen = ?, fuel_level = ?, status = 'active' WHERE id = ?",
+        (latitude, longitude, now, fuel_level, vehicle_id),
     )
     return record_id
 

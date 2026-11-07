@@ -13,6 +13,8 @@ API and a web dashboard.
   routes and predicts ETAs from recent telemetry.
 - **Operator dashboard** — a React/TypeScript UI for monitoring live fleet
   status, vehicle detail, and route recommendations.
+- **Low-fuel alerts** — each vehicle reports its latest fuel level and a
+  `low_fuel` flag; the dashboard highlights them and can filter to low fuel only.
 - **Token-based auth** — session/token handling for operators and devices.
 
 ## Architecture
@@ -41,6 +43,7 @@ Copy `.env.example` to `.env` and set:
 - `DATABASE_URL` — Postgres connection string
 - `JWT_SECRET` — signing secret for operator tokens
 - `MODEL_PATH` — path to the route-scoring model artifact
+- `LOW_FUEL_THRESHOLD_PCT` — fuel percentage below which a vehicle is flagged `low_fuel` (default 15)
 
 ## Testing
 
