@@ -23,6 +23,8 @@ export interface Vehicle {
   last_latitude: number | null;
   last_longitude: number | null;
   last_seen: string | null;
+  fuel_level: number | null;
+  low_fuel: boolean;
 }
 
 export interface OperatorSettings {

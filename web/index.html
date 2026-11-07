@@ -4,6 +4,20 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Atlas — Fleet Dashboard</title>
+    <style>
+      .fuel-badge.low-fuel {
+        margin-left: 0.5rem;
+        padding: 0.1rem 0.5rem;
+        border-radius: 999px;
+        background: #dc2626;
+        color: #fff;
+        font-size: 0.75rem;
+        font-weight: 600;
+      }
+      tr.low-fuel-row td { background: #fef2f2; }
+      .vehicle-filters { display: flex; gap: 1rem; align-items: center; margin-bottom: 0.5rem; }
+      .low-fuel-count { color: #dc2626; font-weight: 600; }
+    </style>
   </head>
   <body>
     <div id="root"></div>

@@ -36,6 +36,8 @@ class VehicleResponse(BaseModel):
     last_latitude: float | None = None
     last_longitude: float | None = None
     last_seen: datetime | None = None
+    fuel_level: float | None = None
+    low_fuel: bool = False
 
 
 class RouteCandidate(BaseModel):

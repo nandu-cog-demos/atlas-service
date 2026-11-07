@@ -1,5 +1,6 @@
 import React from "react";
 import type { Vehicle } from "../api/client";
+import { FuelBadge } from "./FuelBadge";
 
 interface Props {
   vehicle: Vehicle;
@@ -23,6 +24,10 @@ export function VehicleDetail({ vehicle }: Props) {
           {vehicle.last_latitude != null && vehicle.last_longitude != null
             ? `${vehicle.last_latitude.toFixed(4)}, ${vehicle.last_longitude.toFixed(4)}`
             : "Unknown"}
+        </dd>
+        <dt>Fuel</dt>
+        <dd>
+          <FuelBadge fuelLevel={vehicle.fuel_level} lowFuel={vehicle.low_fuel} />
         </dd>
         <dt>Last Seen</dt>
         <dd>{vehicle.last_seen ?? "Never"}</dd>
